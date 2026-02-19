@@ -28,18 +28,22 @@ class OllamaClient:
         models = self.get_models()
         return any(m.get('name', '').startswith(model_name) for m in models)
 
-    def generate_stream(self, model: str, prompt: str, temperature: float = 0.3, max_tokens: int = 2048, top_p: float = 0.9):
+    def generate_stream(self, model: str, prompt: str, temperature: float = 0.3, max_tokens: int = 2048, top_p: float = 0.9, num_thread: int = 0):
         """Generate completion with streaming."""
         import json
+
+        options = {
+            "temperature": temperature,
+            "num_predict": max_tokens,
+            "top_p": top_p,
+        }
+        if num_thread > 0:
+            options["num_thread"] = num_thread
 
         payload = {
             "model": model,
             "prompt": prompt,
-            "options": {
-                "temperature": temperature,
-                "num_predict": max_tokens,
-                "top_p": top_p,
-            },
+            "options": options,
             "stream": True,
         }
 

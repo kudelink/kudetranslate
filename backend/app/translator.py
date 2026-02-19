@@ -14,13 +14,15 @@ class Translator:
         default_model: str,
         temperature: float = 0.3,
         max_tokens: int = 2048,
-        top_p: float = 0.9
+        top_p: float = 0.9,
+        num_thread: int = 0
     ):
         self.client = OllamaClient(ollama_host)
         self.default_model = default_model
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.top_p = top_p
+        self.num_thread = num_thread
 
     def get_available_models(self):
         """Get list of available models."""
@@ -50,7 +52,8 @@ class Translator:
             prompt=prompt,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            top_p=self.top_p
+            top_p=self.top_p,
+            num_thread=self.num_thread
         ):
             if 'response' in chunk:
                 yield chunk

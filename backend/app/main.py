@@ -35,7 +35,8 @@ translator = Translator(
     default_model=ollama_config.get('default_model', 'llama3.2'),
     temperature=llm_config.get('temperature', 0.3),
     max_tokens=llm_config.get('max_tokens', 2048),
-    top_p=llm_config.get('top_p', 0.9)
+    top_p=llm_config.get('top_p', 0.9),
+    num_thread=llm_config.get('num_thread', 0)
 )
 
 auto_download = ollama_config.get('auto_download', True)
