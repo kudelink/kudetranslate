@@ -1,0 +1,51 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: translate-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_THREADS=8
+      - OLLAMA_FLASH_ATTENTION=1
+    networks:
+      - translate-network
+
+  backend:
+    image: kudetranslate-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: translate-backend
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - CONFIG_PATH=/app/config.yaml
+    depends_on:
+      - ollama
+    networks:
+      - translate-network
+
+  frontend:
+    image: kudetranslate-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: translate-frontend
+    ports:
+      - "4321:80"
+    environment:
+      - BACKEND_URL=http://backend:5000
+    depends_on:
+      - backend
+    networks:
+      - translate-network
+    restart: on-failure
+
+networks:
+  translate-network:
+    driver: bridge
+
+volumes:
+  ollama_data:

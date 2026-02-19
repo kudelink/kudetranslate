@@ -1,0 +1,39 @@
+ollama:
+  host: "http://ollama:11434"
+  default_model: "translategemma:4b"
+  auto_download: true
+
+llm:
+  temperature: 0.2
+  max_tokens: 8192
+  top_p: 0.9
+
+translation:
+  default_source_lang: "auto"
+  default_target_lang: "es"
+
+languages:
+  - code: "auto"
+    name: "Detect Language"
+  - code: "es"
+    name: "Spanish"
+  - code: "en"
+    name: "English"
+  - code: "fr"
+    name: "French"
+  - code: "de"
+    name: "German"
+  - code: "it"
+    name: "Italian"
+  - code: "pt"
+    name: "Portuguese"
+  - code: "zh"
+    name: "Chinese"
+  - code: "ja"
+    name: "Japanese"
+  - code: "gl"
+    name: "Galician"
+  - code: "ca"
+    name: "Catalan"
+  - code: "eu"
+    name: "Basque"
