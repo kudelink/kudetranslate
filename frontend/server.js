@@ -17,6 +17,8 @@ app.use(express.static('dist'));
 app.use('/api', createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  timeout: 600000,        // 10 min proxy timeout (queue wait + translation)
+  proxyTimeout: 600000,   // 10 min backend timeout
   pathRewrite: {
     '^/api': '/api',
   },

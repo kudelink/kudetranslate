@@ -408,6 +408,16 @@ async function translate() {
                 return;
               }
 
+              // Queue status updates
+              if (data.queue === true) {
+                showQueueStatus(data.position, data.total);
+                continue;
+              }
+              if (data.started === true) {
+                hideQueueStatus();
+                continue;
+              }
+
               if (data.token) {
                 targetText += data.token;
                 targetTextArea.value = targetText;
@@ -485,6 +495,7 @@ function showLoading() {
 
 function hideLoading() {
   isLoading = false;
+  hideQueueStatus();
   updateButtonStates();
 }
 
@@ -496,6 +507,23 @@ function updateButtonStates() {
   if (swapBtn) {
     swapBtn.disabled = isLoading;
     swapBtn.classList.toggle('translating', isLoading);
+  }
+}
+
+// Show/hide queue status
+const queueBanner = document.getElementById('queue-banner');
+const queueText = document.getElementById('queue-text');
+
+function showQueueStatus(position: number, total: number) {
+  if (queueBanner && queueText) {
+    queueText.textContent = `Queue position: ${position} of ${total}. Waiting for your turn...`;
+    queueBanner.style.display = 'flex';
+  }
+}
+
+function hideQueueStatus() {
+  if (queueBanner) {
+    queueBanner.style.display = 'none';
   }
 }
 

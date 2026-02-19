@@ -2,6 +2,8 @@ import os
 import yaml
 import logging
 import json
+import threading
+from collections import deque
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from app.translator import Translator
@@ -44,6 +46,54 @@ auto_download = ollama_config.get('auto_download', True)
 # Load configured models with their prompt types
 configured_models = config.get('models', [])
 model_prompt_types = {m['name']: m.get('prompt_type', 'generic') for m in configured_models}
+
+# Translation queue: semaphore limits concurrent Ollama access
+translation_semaphore = threading.Semaphore(1)
+translation_queue_lock = threading.Lock()
+translation_waiting = deque()  # list of event objects for waiting requests
+
+
+class TranslationSlot:
+    """Tracks a request's position in the translation queue."""
+
+    def __init__(self):
+        self.ready = threading.Event()
+
+    def wait_in_queue(self):
+        """Wait until it's our turn. Returns queue updates as SSE strings."""
+        with translation_queue_lock:
+            # Try to acquire immediately (non-blocking)
+            if translation_semaphore.acquire(blocking=False):
+                return  # No queue, go straight to translation
+
+            # We have to wait — register in queue
+            translation_waiting.append(self)
+
+        # Send queue updates while waiting
+        while not self.ready.is_set():
+            with translation_queue_lock:
+                if self in translation_waiting:
+                    position = list(translation_waiting).index(self) + 1
+                    total = len(translation_waiting)
+                else:
+                    position = 0
+                    total = 0
+            if position > 0:
+                yield json.dumps({'queue': True, 'position': position, 'total': total})
+            # Wait up to 2 seconds before sending next update
+            if self.ready.wait(timeout=2):
+                break
+
+        # We've been signaled — acquire the semaphore (should be available now)
+        translation_semaphore.acquire()
+
+    def release(self):
+        """Release the semaphore and wake up the next waiter."""
+        translation_semaphore.release()
+        with translation_queue_lock:
+            if translation_waiting:
+                next_slot = translation_waiting.popleft()
+                next_slot.ready.set()
 
 
 def ensure_models_downloaded():
@@ -140,9 +190,17 @@ def translate_stream():
         return jsonify({'translated_text': ''})
 
     def generate():
+        slot = TranslationSlot()
         try:
             # Use default model if none specified
             model_to_use = model or translator.default_model
+
+            # Wait in queue (yields SSE queue updates while waiting)
+            for queue_update in slot.wait_in_queue():
+                yield f"data: {queue_update}\n\n"
+
+            # Notify client that translation is starting
+            yield f"data: {json.dumps({'queue': False, 'started': True})}\n\n"
 
             # Check if model exists, download if needed
             if auto_download and not translator.check_model_exists(model_to_use):
@@ -151,9 +209,6 @@ def translate_stream():
                 if not download_success:
                     yield f"data: {json.dumps({'error': f'Failed to download model {model_to_use}'})}\n\n"
                     return
-
-            # Track stats
-            stats = None
 
             # Resolve prompt type for this model
             prompt_type = model_prompt_types.get(model_to_use, 'generic')
@@ -166,15 +221,13 @@ def translate_stream():
                 prompt_type=prompt_type
             ):
                 if 'response' in chunk:
-                    # Check if this is the last chunk with stats
                     if chunk.get('done', False):
-                        # Calculate stats
                         eval_count = chunk.get('eval_count', 0)
-                        eval_duration = chunk.get('eval_duration', 0)  # nanoseconds
+                        eval_duration = chunk.get('eval_duration', 0)
 
                         tokens_per_second = 0
                         if eval_duration > 0:
-                            tokens_per_second = (eval_count / eval_duration) * 1e9  # convert to seconds
+                            tokens_per_second = (eval_count / eval_duration) * 1e9
 
                         stats = {
                             'token': chunk['response'],
@@ -190,6 +243,8 @@ def translate_stream():
         except Exception as e:
             logger.error(f"Translation error: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        finally:
+            slot.release()
 
     return Response(generate(), mimetype='text/event-stream')
 
