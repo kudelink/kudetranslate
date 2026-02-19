@@ -5,21 +5,57 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="KudeTranslate">
   <!-- Header -->
   <header class="header">
-    <h1 class="header-title">KudeTranslate</h1>
+    <div class="header-center">
+      <h1 class="header-title">KudeTranslate</h1>
+      <span class="header-model" id="model-badge">translategemma:4b</span>
+    </div>
     <div class="header-controls">
-      <span class="model-badge" id="model-badge">translategemma:4b</span>
-      <div class="model-selector">
+      <div class="model-selector desktop-only">
         <select id="model-select">
           <option value="">Loading models...</option>
         </select>
       </div>
-      <button class="refresh-button" id="refresh-btn" title="Refresh models">
+      <button class="settings-button mobile-only" id="settings-btn" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
+      <button class="refresh-button desktop-only" id="refresh-btn" title="Refresh models">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       </button>
     </div>
   </header>
+
+  <!-- Mobile Settings Modal -->
+  <div class="mobile-settings-modal" id="mobile-settings-modal" style="display: none;">
+    <div class="mobile-settings-content">
+      <div class="mobile-settings-header">
+        <h3>Settings</h3>
+        <button class="close-modal" id="close-settings-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="mobile-settings-body">
+        <div class="model-selector">
+          <label for="model-select-mobile">Model</label>
+          <select id="model-select-mobile">
+            <option value="">Loading models...</option>
+          </select>
+        </div>
+        <button class="refresh-button" id="refresh-btn-mobile" title="Refresh models">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh Models</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Content -->
   <main class="main-content">
@@ -51,6 +87,12 @@ import Layout from '../layouts/Layout.astro';
           placeholder="Enter text to translate..."
         ></textarea>
         <div class="action-buttons">
+          <button class="btn btn-clear" id="clear-btn" title="Clear text">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Clear</span>
+          </button>
           <button class="btn btn-primary" id="translate-btn">
             <svg class="spinner" id="translate-spinner" style="display: none;"></svg>
             <span>Translate</span>

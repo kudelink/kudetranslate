@@ -48,10 +48,13 @@ const targetTextArea = document.getElementById('target-text') as HTMLTextAreaEle
 const sourceLangSelect = document.getElementById('source-lang') as HTMLSelectElement;
 const targetLangSelect = document.getElementById('target-lang') as HTMLSelectElement;
 const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+const modelSelectMobile = document.getElementById('model-select-mobile') as HTMLSelectElement;
 const translateBtn = document.getElementById('translate-btn') as HTMLButtonElement;
+const clearBtn = document.getElementById('clear-btn') as HTMLButtonElement;
 const swapBtn = document.getElementById('swap-btn') as HTMLButtonElement;
 const copyBtn = document.getElementById('copy-btn') as HTMLButtonElement;
 const refreshBtn = document.getElementById('refresh-btn') as HTMLButtonElement;
+const refreshBtnMobile = document.getElementById('refresh-btn-mobile') as HTMLButtonElement;
 const sourceCharCount = document.getElementById('source-char-count');
 const targetCharCount = document.getElementById('target-char-count');
 const loadingOverlay = document.getElementById('loading-overlay');
@@ -61,6 +64,9 @@ const translationStats = document.getElementById('translation-stats');
 const statTokens = document.getElementById('stat-tokens');
 const statSpeed = document.getElementById('stat-speed');
 const statTime = document.getElementById('stat-time');
+const settingsBtn = document.getElementById('settings-btn');
+const mobileSettingsModal = document.getElementById('mobile-settings-modal');
+const closeSettingsBtn = document.getElementById('close-settings-btn');
 
 // Initialize
 async function init() {
@@ -144,10 +150,12 @@ function populateLanguageSelectors() {
 // Populate model selector
 function populateModelSelector() {
   modelSelect.innerHTML = '';
+  if (modelSelectMobile) modelSelectMobile.innerHTML = '';
 
   if (models.length === 0) {
     const option = new Option('No models available', '');
     modelSelect.add(option);
+    if (modelSelectMobile) modelSelectMobile.add(option.cloneNode(true) as HTMLOptionElement);
     return;
   }
 
@@ -156,6 +164,7 @@ function populateModelSelector() {
     const displayName = model.name;
     const option = new Option(displayName, model.name);
     modelSelect.add(option);
+    if (modelSelectMobile) modelSelectMobile.add(option.cloneNode(true) as HTMLOptionElement);
   });
 
   // Set current model
@@ -163,6 +172,7 @@ function populateModelSelector() {
     const matchingModel = models.find(m => m.name.startsWith(currentModel));
     if (matchingModel) {
       modelSelect.value = matchingModel.name;
+      if (modelSelectMobile) modelSelectMobile.value = matchingModel.name;
     }
   }
 
@@ -175,6 +185,10 @@ function updateModelDisplay() {
   if (modelBadge) {
     // Show full model name with size (e.g., "translategemma:4b")
     modelBadge.textContent = currentModel;
+  }
+  // Sync mobile selector
+  if (modelSelectMobile && currentModel) {
+    modelSelectMobile.value = currentModel;
   }
 }
 
@@ -231,6 +245,50 @@ function setupEventListeners() {
 
   // Copy button
   copyBtn?.addEventListener('click', copyTranslation);
+
+  // Clear button
+  clearBtn?.addEventListener('click', () => {
+    sourceTextArea.value = '';
+    sourceText = '';
+    updateCharCount();
+  });
+
+  // Mobile settings modal
+  settingsBtn?.addEventListener('click', () => {
+    if (mobileSettingsModal) {
+      mobileSettingsModal.style.display = 'flex';
+    }
+  });
+
+  closeSettingsBtn?.addEventListener('click', () => {
+    if (mobileSettingsModal) {
+      mobileSettingsModal.style.display = 'none';
+    }
+  });
+
+  mobileSettingsModal?.addEventListener('click', (e) => {
+    if (e.target === mobileSettingsModal) {
+      mobileSettingsModal.style.display = 'none';
+    }
+  });
+
+  // Mobile model select
+  modelSelectMobile?.addEventListener('change', async () => {
+    const selectedModel = modelSelectMobile.value;
+    if (selectedModel && selectedModel !== currentModel) {
+      currentModel = selectedModel;
+      updateModelDisplay();
+      if (modelSelect) modelSelect.value = selectedModel;
+      await checkAndDownloadModel(selectedModel);
+    }
+  });
+
+  // Mobile refresh button
+  refreshBtnMobile?.addEventListener('click', async () => {
+    refreshBtnMobile.disabled = true;
+    await loadModels();
+    refreshBtnMobile.disabled = false;
+  });
 }
 
 // Update character count
