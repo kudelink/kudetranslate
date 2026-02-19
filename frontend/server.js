@@ -20,6 +20,15 @@ app.use('/api', createProxyMiddleware({
   pathRewrite: {
     '^/api': '/api',
   },
+  onProxyRes: (proxyRes, req, res) => {
+    // Disable buffering for SSE streaming responses
+    if (proxyRes.headers['content-type']?.includes('text/event-stream')) {
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+    }
+  },
 }));
 
 // Handle SPA routing
