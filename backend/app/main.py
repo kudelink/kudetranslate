@@ -102,44 +102,6 @@ def download_model():
     return jsonify({'success': success, 'model': model_name})
 
 
-@app.route('/api/translate', methods=['POST'])
-def translate():
-    """Translate text."""
-    data = request.get_json()
-
-    text = data.get('text', '')
-    source_lang = data.get('source_lang', 'auto')
-    target_lang = data.get('target_lang', 'es')
-    model = data.get('model')
-
-    if not text:
-        return jsonify({'translated_text': ''})
-
-    try:
-        # Use default model if none specified
-        model_to_use = model or translator.default_model
-
-        # Check if model exists, download if needed
-        if auto_download and not translator.check_model_exists(model_to_use):
-            logger.info(f"Auto-downloading model: {model_to_use}")
-            download_success = translator.download_model(model_to_use)
-            if not download_success:
-                return jsonify({'error': f'Failed to download model {model_to_use}'}), 500
-
-        translated = translator.translate(
-            text=text,
-            source_lang=source_lang,
-            target_lang=target_lang,
-            model=model_to_use
-        )
-
-        return jsonify({'translated_text': translated})
-
-    except Exception as e:
-        logger.error(f"Translation error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
 @app.route('/api/translate/stream', methods=['POST'])
 def translate_stream():
     """Translate text with streaming response."""

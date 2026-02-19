@@ -12,9 +12,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files and install all dependencies (including production)
+# Copy package files and install only production dependencies
 COPY --from=builder /app/package.json ./
-RUN npm install
+RUN npm install --omit=dev
 
 # Copy server.js and dist
 COPY --from=builder /app/server.js ./

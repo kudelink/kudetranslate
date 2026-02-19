@@ -1,6 +1,6 @@
 import requests
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,6 @@ class OllamaClient:
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
-        self.session.headers.update({'Content-Type': 'application/json'})
 
     def get_models(self) -> List[Dict[str, Any]]:
         """Get list of available models."""
@@ -29,37 +28,6 @@ class OllamaClient:
         models = self.get_models()
         return any(m.get('name', '').startswith(model_name) for m in models)
 
-    def generate(
-        self,
-        model: str,
-        prompt: str,
-        temperature: float = 0.3,
-        max_tokens: int = 2048,
-        top_p: float = 0.9,
-        stream: bool = False
-    ) -> Dict[str, Any]:
-        """Generate completion from model."""
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "top_p": top_p,
-            "stream": stream,
-        }
-
-        try:
-            response = self.session.post(
-                f"{self.base_url}/api/generate",
-                json=payload,
-                timeout=120
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error generating: {e}")
-            raise Exception(f"Failed to generate: {str(e)}")
-
     def generate_stream(self, model: str, prompt: str, temperature: float = 0.3, max_tokens: int = 2048, top_p: float = 0.9):
         """Generate completion with streaming."""
         import json
@@ -67,9 +35,11 @@ class OllamaClient:
         payload = {
             "model": model,
             "prompt": prompt,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "top_p": top_p,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens,
+                "top_p": top_p,
+            },
             "stream": True,
         }
 

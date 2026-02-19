@@ -22,33 +22,6 @@ class Translator:
         self.max_tokens = max_tokens
         self.top_p = top_p
 
-    def translate(
-        self,
-        text: str,
-        source_lang: str,
-        target_lang: str,
-        model: str = None
-    ) -> str:
-        """Translate text from source to target language."""
-        if not text or not text.strip():
-            return ""
-
-        model = model or self.default_model
-
-        prompt = build_translation_prompt(text, source_lang, target_lang)
-
-        logger.info(f"Translating with model: {model}")
-
-        response = self.client.generate(
-            model=model,
-            prompt=prompt,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            top_p=self.top_p
-        )
-
-        return response.get('response', '').strip()
-
     def get_available_models(self):
         """Get list of available models."""
         return self.client.get_models()

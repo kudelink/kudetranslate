@@ -67,6 +67,7 @@ const statTime = document.getElementById('stat-time');
 const settingsBtn = document.getElementById('settings-btn');
 const mobileSettingsModal = document.getElementById('mobile-settings-modal');
 const closeSettingsBtn = document.getElementById('close-settings-btn');
+const themeToggle = document.getElementById('theme-toggle');
 
 // Initialize
 async function init() {
@@ -249,7 +250,10 @@ function setupEventListeners() {
   // Clear button
   clearBtn?.addEventListener('click', () => {
     sourceTextArea.value = '';
+    targetTextArea.value = '';
     sourceText = '';
+    targetText = '';
+    if (translationStats) translationStats.style.display = 'none';
     updateCharCount();
   });
 
@@ -289,6 +293,12 @@ function setupEventListeners() {
     await loadModels();
     refreshBtnMobile.disabled = false;
   });
+
+  // Theme toggle
+  themeToggle?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
 }
 
 // Update character count
@@ -303,14 +313,14 @@ function updateCharCount() {
 
 // Check and download model if needed
 async function checkAndDownloadModel(modelName: string) {
-  showLoading('Checking model...');
+  showLoading();
 
   try {
     const response = await fetch(`${API_URL}/api/models/check/${modelName}`);
     const data = await response.json();
 
     if (!data.exists && config?.ollama.auto_download) {
-      showLoading('Downloading model... This may take a while.');
+      showLoading();
       await downloadModel(modelName);
     }
   } catch (error) {
@@ -347,7 +357,7 @@ async function translate() {
   }
 
   hideError();
-  showLoading('Translating...');
+  showLoading();
 
   // Clear previous translation and stats
   targetTextArea.value = '';
@@ -468,7 +478,7 @@ async function copyTranslation() {
 }
 
 // Show/hide loading
-function showLoading(message: string = 'Loading...') {
+function showLoading() {
   isLoading = true;
   updateButtonStates();
 }
@@ -485,13 +495,7 @@ function updateButtonStates() {
   }
   if (swapBtn) {
     swapBtn.disabled = isLoading;
-  }
-  if (swapBtn) {
-    if (isLoading) {
-      swapBtn.classList.add('translating');
-    } else {
-      swapBtn.classList.remove('translating');
-    }
+    swapBtn.classList.toggle('translating', isLoading);
   }
 }
 

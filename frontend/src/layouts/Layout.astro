@@ -16,6 +16,11 @@ const { title = 'Translate Docker' } = Astro.props;
     <meta name="description" content="Translation app using LLM" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <script is:inline>
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
   </head>
   <body>
     <slot />
