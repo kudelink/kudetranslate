@@ -40,28 +40,37 @@ translator = Translator(
 
 auto_download = ollama_config.get('auto_download', True)
 
+# Load configured models with their prompt types
+configured_models = config.get('models', [])
+model_prompt_types = {m['name']: m.get('prompt_type', 'generic') for m in configured_models}
 
-def ensure_model_downloaded():
-    """Ensure the default model is downloaded on startup."""
-    default_model = ollama_config.get('default_model', 'translategemma:4b')
-    if auto_download:
-        logger.info(f"Checking for default model: {default_model}")
+
+def ensure_models_downloaded():
+    """Ensure all configured models are downloaded on startup."""
+    if not auto_download:
+        return
+
+    model_names = [m['name'] for m in configured_models]
+    if not model_names:
+        model_names = [ollama_config.get('default_model', 'translategemma:4b')]
+
+    for model_name in model_names:
         try:
-            if not translator.check_model_exists(default_model):
-                logger.info(f"Model {default_model} not found. Downloading...")
-                success = translator.download_model(default_model)
+            if not translator.check_model_exists(model_name):
+                logger.info(f"Model {model_name} not found. Downloading...")
+                success = translator.download_model(model_name)
                 if success:
-                    logger.info(f"Model {default_model} downloaded successfully")
+                    logger.info(f"Model {model_name} downloaded successfully")
                 else:
-                    logger.warning(f"Failed to download model {default_model}")
+                    logger.warning(f"Failed to download model {model_name}")
             else:
-                logger.info(f"Model {default_model} is already available")
+                logger.info(f"Model {model_name} is already available")
         except Exception as e:
-            logger.warning(f"Error checking/downloading model: {e}")
+            logger.warning(f"Error checking/downloading model {model_name}: {e}")
 
 
-# Download default model on startup
-ensure_model_downloaded()
+# Download all configured models on startup
+ensure_models_downloaded()
 
 
 @app.route('/api/config', methods=['GET'])
@@ -71,15 +80,29 @@ def get_config():
         'ollama': ollama_config,
         'llm': llm_config,
         'translation': config.get('translation', {}),
-        'languages': config.get('languages', [])
+        'languages': config.get('languages', []),
+        'models': configured_models
     })
 
 
 @app.route('/api/models', methods=['GET'])
 def get_models():
-    """Get list of available Ollama models."""
-    models = translator.get_available_models()
-    return jsonify({'models': models})
+    """Get list of available and configured models."""
+    available = translator.get_available_models()
+    available_names = {m.get('name', '') for m in available}
+
+    # Add configured models that aren't downloaded yet
+    for cm in configured_models:
+        name = cm['name']
+        if not any(a.startswith(name) for a in available_names):
+            available.append({'name': name, 'downloaded': False})
+        else:
+            # Mark downloaded models
+            for m in available:
+                if m.get('name', '').startswith(name):
+                    m['downloaded'] = True
+
+    return jsonify({'models': available})
 
 
 @app.route('/api/models/check/<model_name>', methods=['GET'])
@@ -131,11 +154,15 @@ def translate_stream():
             # Track stats
             stats = None
 
+            # Resolve prompt type for this model
+            prompt_type = model_prompt_types.get(model_to_use, 'generic')
+
             for chunk in translator.translate_stream(
                 text=text,
                 source_lang=source_lang,
                 target_lang=target_lang,
-                model=model_to_use
+                model=model_to_use,
+                prompt_type=prompt_type
             ):
                 if 'response' in chunk:
                     # Check if this is the last chunk with stats

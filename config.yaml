@@ -8,6 +8,12 @@ llm:
   max_tokens: 8192
   top_p: 0.9
 
+models:
+  - name: "translategemma:4b"
+    prompt_type: "translategemma"
+  - name: "ministral-3:3b"
+    prompt_type: "generic"
+
 translation:
   default_source_lang: "auto"
   default_target_lang: "es"

@@ -61,36 +61,39 @@ class OllamaClient:
             raise Exception(f"Failed to generate: {str(e)}")
 
     def download_model(self, model_name: str) -> bool:
-        """Download a model and wait for completion."""
-        import time
+        """Download a model using streaming pull API."""
+        import json as _json
 
         try:
-            # Try the new API format first (Ollama 0.1.20+)
+            logger.info(f"Starting pull for model: {model_name}")
             response = self.session.post(
                 f"{self.base_url}/api/pull",
-                json={"name": model_name},
-                timeout=600
+                json={"name": model_name, "stream": True},
+                stream=True,
+                timeout=(10, 600)
             )
-
-            if response.status_code == 404:
-                # Fallback to older API format
-                response = self.session.post(
-                    f"{self.base_url}/api/pull",
-                    json={"name": model_name, "stream": False},
-                    timeout=600
-                )
-
             response.raise_for_status()
 
-            # Poll to check if model is now available
-            for _ in range(30):  # Wait up to 60 seconds
-                time.sleep(2)
-                if self.check_model_exists(model_name):
-                    logger.info(f"Model {model_name} downloaded successfully")
-                    return True
+            for line in response.iter_lines():
+                if line:
+                    data = _json.loads(line)
+                    status = data.get('status', '')
+                    total = data.get('total', 0)
+                    completed = data.get('completed', 0)
 
-            return True  # Assume success if no error during pull
+                    if total > 0:
+                        pct = round(completed / total * 100)
+                        logger.info(f"Pulling {model_name}: {status} {pct}%")
+                    elif status:
+                        logger.info(f"Pulling {model_name}: {status}")
+
+                    if data.get('error'):
+                        logger.error(f"Pull error for {model_name}: {data['error']}")
+                        return False
+
+            logger.info(f"Model {model_name} pulled successfully")
+            return True
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error downloading model: {e}")
+            logger.error(f"Error downloading model {model_name}: {e}")
             return False

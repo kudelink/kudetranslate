@@ -34,14 +34,14 @@ class Translator:
         """Download a model."""
         return self.client.download_model(model_name)
 
-    def translate_stream(self, text: str, source_lang: str, target_lang: str, model: str = None):
+    def translate_stream(self, text: str, source_lang: str, target_lang: str, model: str = None, prompt_type: str = "translategemma"):
         """Translate text with streaming."""
         if not text or not text.strip():
             return
 
         model = model or self.default_model
 
-        prompt = build_translation_prompt(text, source_lang, target_lang)
+        prompt = build_translation_prompt(text, source_lang, target_lang, prompt_type)
 
         logger.info(f"Translating with model: {model}")
 
