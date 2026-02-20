@@ -7,7 +7,7 @@ llm:
   temperature: 0.1
   max_tokens: 8192
   top_p: 0.9
-  num_thread: 8
+  num_thread: 6
 
 models:
   - name: "translategemma:4b"
@@ -16,7 +16,7 @@ models:
     prompt_type: "generic"
 
 translation:
-  default_source_lang: "auto"
+  default_source_lang: "en"
   default_target_lang: "es"
 
 languages:
