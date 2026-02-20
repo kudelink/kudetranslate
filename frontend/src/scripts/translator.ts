@@ -198,11 +198,21 @@ function setupEventListeners() {
   // Source language change
   sourceLangSelect?.addEventListener('change', () => {
     sourceLang = sourceLangSelect.value;
+    // If source matches target (and not auto), swap them
+    if (sourceLang !== 'auto' && sourceLang === targetLang) {
+      targetLang = targetLangSelect.value = sourceLangSelect.dataset.prev || 'en';
+    }
+    sourceLangSelect.dataset.prev = sourceLang;
   });
 
   // Target language change
   targetLangSelect?.addEventListener('change', () => {
     targetLang = targetLangSelect.value;
+    // If target matches source (and source is not auto), swap them
+    if (sourceLang !== 'auto' && targetLang === sourceLang) {
+      sourceLang = sourceLangSelect.value = targetLangSelect.dataset.prev || 'en';
+    }
+    targetLangSelect.dataset.prev = targetLang;
   });
 
   // Model change

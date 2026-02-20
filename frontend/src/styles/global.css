@@ -4,6 +4,7 @@
   --bg-primary: #FDF6E3;
   --bg-secondary: #FAF3E0;
   --bg-card: #FFFDF7;
+  --bg-textarea: #f7f3e6;
   --text-primary: #3D3D3D;
   --text-secondary: #6B6B6B;
   --accent: #D4A574;
@@ -26,6 +27,7 @@ html.dark {
   --bg-primary: #2C2825;
   --bg-secondary: #352F2B;
   --bg-card: #3A3330;
+  --bg-textarea: #332E2A;
   --text-primary: #E8E0D6;
   --text-secondary: #A89E94;
   --accent: #D4A574;
@@ -280,7 +282,7 @@ a:hover {
   font-size: 1rem;
   font-family: 'Source Sans 3', sans-serif;
   resize: vertical;
-  background-color: var(--bg-card);
+  background-color: var(--bg-textarea);
   color: var(--text-primary);
   transition: border-color var(--transition), box-shadow var(--transition);
   line-height: 1.7;
